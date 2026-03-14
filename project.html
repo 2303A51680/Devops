@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SentimentIQ — Bilingual E-Commerce Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0d0d0d;
+    --ink-2: #3a3a3a;
+    --ink-3: #6b6b6b;
+    --paper: #f7f4ee;
+    --paper-2: #efeae0;
+    --paper-3: #e6dfd2;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0eb;
+    --accent-2: #c8572a;
+    --accent-2-light: #faeee8;
+    --gold: #b8902a;
+    --gold-light: #f7f0de;
+    --border: rgba(13,13,13,0.12);
+    --border-strong: rgba(13,13,13,0.25);
+    --shadow: 0 2px 24px rgba(13,13,13,0.08);
+    --shadow-lg: 0 8px 48px rgba(13,13,13,0.14);
+    --radius: 12px;
+    --radius-sm: 6px;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ─────────────────────────────────────── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── LOGIN ───────────────────────────────────────── */
+  #login-screen {
+    flex-direction: row;
+    background: var(--paper);
+  }
+
+  .login-art {
+    width: 45%;
+    background: var(--ink);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 48px;
+  }
+
+  .login-art-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 70%, #1a3a28 0%, #0d0d0d 70%);
+  }
+
+  .login-art-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .login-art-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+  .orb1 { width: 300px; height: 300px; background: rgba(45,90,61,0.4); top: -80px; right: -80px; }
+  .orb2 { width: 200px; height: 200px; background: rgba(200,87,42,0.25); bottom: 100px; left: 60px; }
+
+  .login-art-content { position: relative; z-index: 2; }
+
+  .login-art-logo {
+    font-family: var(--font-display);
+    font-size: 36px;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .login-art-logo span { color: #6ab87e; font-style: italic; }
+
+  .login-art-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    max-width: 280px;
+    margin-bottom: 32px;
+  }
+
+  .login-art-stats {
+    display: flex; gap: 24px;
+  }
+  .art-stat-val {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: #fff;
+    font-weight: 500;
+  }
+  .art-stat-lbl {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+
+  .login-form-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    background: var(--paper);
+  }
+
+  .login-form-inner { width: 100%; max-width: 380px; }
+
+  .login-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .login-title {
+    font-family: var(--font-display);
+    font-size: 34px;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  .login-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-bottom: 36px;
+    line-height: 1.6;
+  }
+
+  .form-group { margin-bottom: 20px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+    letter-spacing: .02em;
+  }
+  .form-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 16px;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45,90,61,0.1);
+  }
+  .form-input::placeholder { color: var(--ink-3); }
+
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .form-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .form-check input { accent-color: var(--accent); }
+  .form-link { font-size: 13px; color: var(--accent); text-decoration: none; }
+  .form-link:hover { text-decoration: underline; }
+
+  .btn-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .btn-primary:hover { background: #1a1a1a; }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .login-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0;
+    color: var(--ink-3); font-size: 12px;
+  }
+  .login-divider::before, .login-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .demo-hint {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.6;
+    border-left: 3px solid var(--accent);
+  }
+  .demo-hint strong { font-weight: 600; }
+
+  .login-error {
+    display: none;
+    padding: 10px 14px;
+    background: var(--accent-2-light);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--accent-2);
+    margin-bottom: 16px;
+    border-left: 3px solid var(--accent-2);
+  }
+
+  /* ── DASHBOARD ───────────────────────────────────── */
+  #dashboard-screen {
+    flex-direction: column;
+    background: var(--paper);
+  }
+
+  /* Nav */
+  .dash-nav {
+    height: 60px;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 24px;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    color: #fff;
+    font-size: 20px;
+    margin-right: 8px;
+  }
+  .nav-logo span { color: #6ab87e; font-style: italic; }
+
+  .nav-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: .1em;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex; gap: 2px; margin-left: 20px;
+  }
+  .nav-link {
+    padding: 6px 14px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.08); color: #fff; }
+
+  .nav-spacer { flex: 1; }
+
+  .nav-user {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #fff;
+  }
+  .nav-username { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+  .btn-logout {
+    padding: 7px 16px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all .15s;
+    margin-left: 8px;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.35); }
+
+  /* Content */
+  .dash-content { flex: 1; padding: 32px 28px 48px; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+  /* Header */
+  .dash-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 28px;
+  }
+  .dash-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .dash-sub { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+  .dash-date {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    padding: 6px 12px;
+    background: var(--paper-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+
+  /* KPI row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .kpi-card:hover { box-shadow: var(--shadow); }
+
+  .kpi-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+  }
+  .kpi-val {
+    font-family: var(--font-display);
+    font-size: 34px;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-label { font-size: 12px; color: var(--ink-3); }
+  .kpi-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+  .pill-green { background: #e8f5ec; color: #1a6630; }
+  .pill-amber { background: #fdf4e3; color: #8a5c00; }
+  .pill-blue  { background: #e8f0fb; color: #1a3a8a; }
+  .pill-red   { background: #fce8e8; color: #8a1a1a; }
+
+  .kpi-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px; background: var(--paper-3);
+  }
+  .kpi-bar-fill { height: 100%; border-radius: 0 0 0 0; }
+
+  /* Charts grid */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .charts-row-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.01em;
+  }
+  .card-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .card-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--ink-3);
+    padding: 3px 8px;
+    background: var(--paper-2);
+    border-radius: 20px;
+    letter-spacing: .05em;
+  }
+
+  /* Model table */
+  .model-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .model-table th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--ink-3);
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .model-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--paper-2);
+    color: var(--ink-2);
+  }
+  .model-table tr:last-child td { border-bottom: none; }
+  .model-table tr:hover td { background: var(--paper); }
+  .model-name { font-weight: 500; color: var(--ink); }
+  .model-rank {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .rank-1 { background: #fdf4e3; color: #8a5c00; }
+  .rank-2 { background: #e8f5ec; color: #1a6630; }
+
+  .mini-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .mini-bar-bg { flex: 1; height: 5px; background: var(--paper-3); border-radius: 3px; overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+  .mini-bar-val { font-family: var(--font-mono); font-size: 10px; color: var(--ink-2); min-width: 38px; text-align: right; }
+
+  /* N-gram pills */
+  .ngram-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .ngram-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid;
+    font-weight: 400;
+    cursor: default;
+  }
+  .ng-pos { background: #e8f5ec; color: #1a6630; border-color: #b2d9bc; }
+  .ng-neg { background: #fce8e8; color: #8a1a1a; border-color: #e8b2b2; }
+  .ng-neu { background: var(--paper-2); color: var(--ink-2); border-color: var(--border); }
+  .ng-brand { background: var(--gold-light); color: #7a5800; border-color: #e0c97a; }
+
+  /* Translation badge */
+  .translation-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--paper-2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .translation-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .translation-text { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+  .translation-score {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* Logout screen */
+  #logout-screen {
+    align-items: center; justify-content: center;
+    background: var(--ink);
+    flex-direction: column; gap: 20px;
+    text-align: center;
+  }
+  .logout-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .logout-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: #fff;
+  }
+  .logout-sub { font-size: 13px; color: rgba(255,255,255,0.4); max-width: 280px; line-height: 1.6; }
+  .btn-relog {
+    padding: 12px 32px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s;
+    margin-top: 8px;
+  }
+  .btn-relog:hover { background: #1e3f2a; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp .4s ease forwards; }
+  .fade-up-2 { animation: fadeUp .4s .08s ease both; }
+  .fade-up-3 { animation: fadeUp .4s .16s ease both; }
+  .fade-up-4 { animation: fadeUp .4s .24s ease both; }
+  .fade-up-5 { animation: fadeUp .4s .32s ease both; }
+
+  @media (max-width: 900px) {
+    .login-art { display: none; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .charts-row, .charts-row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-art">
+    <div class="login-art-bg"></div>
+    <div class="login-art-grid"></div>
+    <div class="login-art-orb orb1"></div>
+    <div class="login-art-orb orb2"></div>
+    <div class="login-art-content">
+      <div class="login-art-logo">Sentiment<span>IQ</span></div>
+      <div class="login-art-sub">Transformer-based bilingual sentiment analysis for Chinese e-commerce product reviews — IEEE Access 2025.</div>
+      <div class="login-art-stats">
+        <div>
+          <div class="art-stat-val">98.09%</div>
+          <div class="art-stat-lbl">ELECTRA accuracy</div>
+        </div>
+        <div>
+          <div class="art-stat-val">62,774</div>
+          <div class="art-stat-lbl">Reviews analysed</div>
+        </div>
+        <div>
+          <div class="art-stat-val">10</div>
+          <div class="art-stat-lbl">Product categories</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-form-wrap">
+    <div class="login-form-inner">
+      <div class="login-eyebrow">Research Portal</div>
+      <h1 class="login-title">Welcome back,<br>researcher.</h1>
+      <p class="login-sub">Sign in to access the sentiment analysis dashboard for the bilingual e-commerce study.</p>
+
+      <div class="login-error" id="login-error">Invalid credentials. Try admin / admin123</div>
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" placeholder="e.g. admin" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="form-row">
+        <label class="form-check">
+          <input type="checkbox" checked> Remember me
+        </label>
+        <a href="#" class="form-link">Forgot password?</a>
+      </div>
+
+      <button class="btn-primary" onclick="doLogin()">Sign in to dashboard</button>
+
+      <div class="demo-hint">
+        <strong>Demo credentials:</strong> username <code>admin</code> / password <code>admin123</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ════════════════════════════════════ -->
+<div id="dashboard-screen" class="screen">
+
+  <nav class="dash-nav">
+    <div class="nav-logo">Sentiment<span>IQ</span></div>
+    <div class="nav-badge">IEEE Access 2025</div>
+    <div class="nav-links">
+      <div class="nav-link active">Overview</div>
+      <div class="nav-link">Models</div>
+      <div class="nav-link">Categories</div>
+      <div class="nav-link">N-Gram</div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">AD</div>
+      <span class="nav-username" id="nav-username">admin</span>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="dash-content">
+
+    <div class="dash-header fade-up">
+      <div>
+        <div class="dash-title">Research Dashboard</div>
+        <div class="dash-sub">Bilingual E-Commerce Sentiment Analysis · Shan, Sun & Macawile · IEEE Access Vol.13, 2025</div>
+      </div>
+      <div class="dash-date" id="dash-date"></div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row fade-up-2">
+      <div class="kpi-card">
+        <div class="kpi-tag">Top Model</div>
+        <div class="kpi-val">98.09<span style="font-size:18px">%</span></div>
+        <div class="kpi-label">ELECTRA accuracy</div>
+        <div class="kpi-pill pill-green">Best performer</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:98%;background:#2d5a3d"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-tag">Dataset A</div>
+        <div class="kpi-val">62<span style="font-size:18px">K+</span></div>
+        <div class="kpi-label">Chinese product reviews</div>
+        <div class="kpi-pill pill-blue">10 categories</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:80%;background:#1a3a8a"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-tag">Cross-lingual</div>
+        <div class="kpi-val">0.649</div>
+        <div class="kpi-label">Cosine similarity (ZH→EN)</div>
+        <div class="kpi-pill pill-amber">Google Translate API</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:64%;background:#b8902a"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-tag">Model agreement</div>
+        <div class="kpi-val">90.6<span style="font-size:18px">%</span></div>
+        <div class="kpi-label">ELECTRA vs BERT</div>
+        <div class="kpi-pill pill-green">κ = 0.76 (substantial)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:91%;background:#2d5a3d"></div></div>
+      </div>
+    </div>
+
+    <!-- Translation row -->
+    <div class="translation-row fade-up-3">
+      <div class="translation-dot"></div>
+      <div class="translation-text">
+        <strong>Cross-lingual pipeline active</strong> — Chinese reviews translated via Google Translate API. Manual verification confirmed moderate-to-strong semantic alignment between source and target text.
+      </div>
+      <div class="translation-score">0.6491</div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="charts-row fade-up-3">
+      <!-- Accuracy bar -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Model accuracy comparison</div>
+            <div class="card-sub">All models trained for 50 epochs on Dell Precision 7770 · NVIDIA A3000 GPU</div>
+          </div>
+          <div class="card-tag">RESULT TABLE 1</div>
+        </div>
+        <div style="position:relative;height:240px"><canvas id="accChart"></canvas></div>
+      </div>
+
+      <!-- Radar -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Top 3 models — metric profile</div>
+            <div class="card-sub">Accuracy, precision, recall, F1</div>
+          </div>
+          <div class="card-tag">RADAR</div>
+        </div>
+        <div style="position:relative;height:240px"><canvas id="radarChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="charts-row-3 fade-up-4">
+
+      <!-- Sentiment by category -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Avg sentiment by category</div>
+            <div class="card-sub">NLTK VADER scores (−1 to +1)</div>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="sentChart"></canvas></div>
+      </div>
+
+      <!-- Runtime scatter -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Accuracy vs runtime</div>
+            <div class="card-sub">Performance–cost trade-off</div>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="scatterChart"></canvas></div>
+      </div>
+
+      <!-- Loss comparison -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Model loss</div>
+            <div class="card-sub">Lower is better</div>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="lossChart"></canvas></div>
+      </div>
+
+    </div>
+
+    <!-- Bottom row -->
+    <div class="charts-row fade-up-5">
+
+      <!-- Full model table -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Full model performance table</div>
+            <div class="card-sub">Replication of IEEE Access Table 1</div>
+          </div>
+          <div class="card-tag">TABLE 1</div>
+        </div>
+        <table class="model-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Loss</th>
+              <th>Accuracy</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1 score</th>
+              <th>Runtime (h)</th>
+            </tr>
+          </thead>
+          <tbody id="model-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- N-gram / keywords -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Top N-gram themes — Dataset B</div>
+            <div class="card-sub">Predominant phrases from Chinese consumer feedback</div>
+          </div>
+          <div class="card-tag">N-GRAM FIG 4</div>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px">Positive signals</div>
+        <div class="ngram-cloud">
+          <span class="ngram-pill ng-pos">Good</span>
+          <span class="ngram-pill ng-pos">Not Bad</span>
+          <span class="ngram-pill ng-pos">Safe</span>
+          <span class="ngram-pill ng-pos">Confidence</span>
+          <span class="ngram-pill ng-pos">Hope</span>
+          <span class="ngram-pill ng-pos">Fast</span>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-3);margin:14px 0 10px">Negative / pain-point signals</div>
+        <div class="ngram-cloud">
+          <span class="ngram-pill ng-neg">No</span>
+          <span class="ngram-pill ng-neg">Problem</span>
+          <span class="ngram-pill ng-neg">Don't Eat</span>
+          <span class="ngram-pill ng-neg">No One Answers</span>
+          <span class="ngram-pill ng-neg">Don't Know</span>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-3);margin:14px 0 10px">Brands referenced</div>
+        <div class="ngram-cloud">
+          <span class="ngram-pill ng-brand">Mengniu</span>
+          <span class="ngram-pill ng-brand">Shuanghui</span>
+          <span class="ngram-pill ng-brand">Yili</span>
+          <span class="ngram-pill ng-brand">ZhongLiang</span>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink-3);margin:14px 0 10px">Operational themes</div>
+        <div class="ngram-cloud">
+          <span class="ngram-pill ng-neu">Service</span>
+          <span class="ngram-pill ng-neu">Logistics</span>
+          <span class="ngram-pill ng-neu">Consumer</span>
+          <span class="ngram-pill ng-neu">Quality</span>
+          <span class="ngram-pill ng-neu">Domestic</span>
+          <span class="ngram-pill ng-neu">Dairy</span>
+          <span class="ngram-pill ng-neu">Milk</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ LOGOUT ════════════════════════════════════════ -->
+<div id="logout-screen" class="screen">
+  <div class="logout-icon">✓</div>
+  <div class="logout-title">Signed out</div>
+  <div class="logout-sub">You have been successfully signed out of SentimentIQ. Your session has ended.</div>
+  <button class="btn-relog" onclick="goToLogin()">Sign back in</button>
+</div>
+
+<script>
+  const MODELS = [
+    { name:'Linear Reg + SGD', loss:2.4564, acc:0.3320, prec:0.3430, rec:0.3169, f1:0.2771, rt:0.04, rank:null },
+    { name:'SVC with SGD',     loss:0.2524, acc:0.8884, prec:0.8760, rec:0.8627, f1:0.8685, rt:0.09, rank:null },
+    { name:'RF + XGBoost',     loss:0.6122, acc:0.8243, prec:0.8957, rec:0.8012, f1:0.8358, rt:0.58, rank:null },
+    { name:'BiLSTM',           loss:0.1326, acc:0.9609, prec:0.9613, rec:0.9555, f1:0.9583, rt:2.98, rank:2 },
+    { name:'ELECTRA',          loss:0.0625, acc:0.9809, prec:0.9819, rec:0.9623, f1:0.9711, rt:10.29, rank:1 },
+    { name:'BERT',             loss:0.1319, acc:0.9528, prec:0.9529, rec:0.9528, f1:0.9528, rt:27.89, rank:null },
+  ];
+
+  const BAR_COLORS = ['#b4b2a9','#2d5a3d','#b8902a','#1a3a8a','#c8572a','#534AB7'];
+
+  function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const err = document.getElementById('login-error');
+    if (u === 'admin' && p === 'admin123') {
+      err.style.display = 'none';
+      document.getElementById('nav-username').textContent = u;
+      document.getElementById('nav-avatar').textContent = u.slice(0,2).toUpperCase();
+      showScreen('dashboard-screen');
+      initCharts();
+      buildTable();
+      document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    } else {
+      err.style.display = 'block';
+    }
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+  function doLogout() { showScreen('logout-screen'); }
+  function goToLogin() {
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    showScreen('login-screen');
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  let chartsInit = false;
+  function initCharts() {
+    if (chartsInit) return;
+    chartsInit = true;
+
+    // Accuracy bar
+    new Chart(document.getElementById('accChart'), {
+      type: 'bar',
+      data: {
+        labels: MODELS.map(m => m.name),
+        datasets: [{ data: MODELS.map(m => +(m.acc*100).toFixed(2)), backgroundColor: BAR_COLORS, borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y.toFixed(2)+'%' } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10, family:'DM Sans' }, maxRotation: 35 } },
+          y: { min: 0, max: 100, ticks: { callback: v => v+'%', font: { size: 10 } }, grid: { color: '#f0ece4' } }
+        }
+      }
+    });
+
+    // Radar
+    new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: {
+        labels: ['Accuracy','Precision','Recall','F1 Score'],
+        datasets: [
+          { label:'ELECTRA', data:[98.09,98.19,96.23,97.11], borderColor:'#c8572a', backgroundColor:'rgba(200,87,42,0.1)', pointBackgroundColor:'#c8572a', borderWidth:2, pointRadius:3 },
+          { label:'BiLSTM',  data:[96.09,96.13,95.55,95.83], borderColor:'#2d5a3d', backgroundColor:'rgba(45,90,61,0.08)', pointBackgroundColor:'#2d5a3d', borderWidth:2, pointRadius:3 },
+          { label:'BERT',    data:[95.28,95.29,95.28,95.28], borderColor:'#534AB7', backgroundColor:'rgba(83,74,183,0.07)', pointBackgroundColor:'#534AB7', borderWidth:2, pointRadius:3 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, labels: { font: { size: 10, family:'DM Sans' }, boxWidth: 10, padding: 10 } } },
+        scales: { r: { min: 90, max: 100, ticks: { font: { size: 9 }, stepSize: 2 }, grid: { color: '#f0ece4' } } }
+      }
+    });
+
+    // Sentiment by category
+    const cats =   ['Books','Water Htr','Hotel','Tablet','Mobile','Mengniu','Computer','Clothes','Shampoo','Fruit'];
+    const scores = [0.481, 0.493, 0.44, 0.38, 0.36, 0.35, 0.39, 0.303, 0.32, 0.224];
+    new Chart(document.getElementById('sentChart'), {
+      type: 'bar',
+      data: {
+        labels: cats,
+        datasets: [{ data: scores, backgroundColor: scores.map(s => s>0.45?'#2d5a3d':s>0.35?'#b8902a':'#c8572a'), borderRadius: 3, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => 'Score: '+c.parsed.y.toFixed(3) } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45 } },
+          y: { min: 0, max: 0.6, ticks: { font: { size: 10 } }, grid: { color: '#f0ece4' } }
+        }
+      }
+    });
+
+    // Scatter
+    const sc = [
+      { label:'ELECTRA', x:10.29, y:98.09, r:8, c:'#c8572a' },
+      { label:'BiLSTM',  x:2.98,  y:96.09, r:8, c:'#2d5a3d' },
+      { label:'BERT',    x:27.89, y:95.28, r:8, c:'#534AB7' },
+      { label:'RF+XGB',  x:0.58,  y:82.43, r:6, c:'#b8902a' },
+      { label:'SVC+SGD', x:0.09,  y:88.84, r:6, c:'#1a3a8a' },
+    ];
+    new Chart(document.getElementById('scatterChart'), {
+      type: 'bubble',
+      data: { datasets: sc.map(d => ({ label:d.label, data:[{x:d.x,y:d.y,r:d.r}], backgroundColor:d.c+'bb', borderColor:d.c })) },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label+': '+c.parsed.y.toFixed(1)+'% @ '+c.parsed.x+'h' } } },
+        scales: {
+          x: { title:{display:true,text:'Runtime (h)',font:{size:10}}, ticks:{font:{size:9}}, grid:{color:'#f0ece4'} },
+          y: { min:75, max:100, title:{display:true,text:'Accuracy %',font:{size:10}}, ticks:{callback:v=>v+'%',font:{size:9}}, grid:{color:'#f0ece4'} }
+        }, layout:{ padding:10 }
+      }
+    });
+
+    // Loss
+    new Chart(document.getElementById('lossChart'), {
+      type: 'bar',
+      data: {
+        labels: MODELS.map(m=>m.name),
+        datasets: [{ data: MODELS.map(m=>m.loss), backgroundColor: MODELS.map(m=>m.loss<0.15?'#2d5a3d':m.loss<0.5?'#b8902a':'#c8572a'), borderRadius:3, borderSkipped:false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid:{display:false}, ticks:{font:{size:9},maxRotation:40} },
+          y: { ticks:{font:{size:9}}, grid:{color:'#f0ece4'} }
+        }
+      }
+    });
+  }
+
+  function buildTable() {
+    const tbody = document.getElementById('model-table-body');
+    [...MODELS].sort((a,b)=>b.acc-a.acc).forEach((m,i) => {
+      const pct = (v) => (v*100).toFixed(2)+'%';
+      const barColor = i===0?'#c8572a':i===1?'#2d5a3d':'#b4b2a9';
+      const rankHTML = m.rank===1
+        ? '<span class="model-rank rank-1">#1</span>'
+        : m.rank===2 ? '<span class="model-rank rank-2">#2</span>' : '';
+      tbody.innerHTML += `<tr>
+        <td><span class="model-name">${m.name}${rankHTML}</span></td>
+        <td>${m.loss.toFixed(4)}</td>
+        <td>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${(m.acc*100).toFixed(1)}%;background:${barColor}"></div></div>
+            <span class="mini-bar-val">${pct(m.acc)}</span>
+          </div>
+        </td>
+        <td>${pct(m.prec)}</td>
+        <td>${pct(m.rec)}</td>
+        <td><strong>${m.f1.toFixed(4)}</strong></td>
+        <td>${m.rt.toFixed(2)} h</td>
+      </tr>`;
+    });
+  }
+</script>
+</body>
+</html>
